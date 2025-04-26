@@ -2,13 +2,13 @@ package com.example.manipalappone;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -17,13 +17,20 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    private RecyclerView recyclerView;
+    private UserAdapter userAdapter;
+    private List<Users> userList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize RecyclerView
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        userAdapter = new UserAdapter(this, userList);
+        recyclerView.setAdapter(userAdapter);
 
         fetchData();
     }
@@ -36,23 +43,20 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<List<Users>> call, Response<List<Users>> response) {
                 List<Users> usersList = response.body();
                 if (usersList != null) {
-                    Log.i("mytag", "Response received:");
-                    for (Users user : usersList) {
-                        Log.i("mytag", "User: Name - " + user.getName() + ", " +
-                                "Username - " + user.getUsername());
-                    }
-
+                    Log.i("mytag", "Response received: " + usersList.size() + " users");
+                    userList.clear();       // Clear the list before adding new data
+                    userList.addAll(usersList); // Add the fetched users to the list
+                    userAdapter.notifyDataSetChanged(); // Notify the adapter to update the RecyclerView
                 } else {
                     Log.i("mytag", "Response body is null");
-
+                    Toast.makeText(MainActivity.this, "Empty response from server", Toast.LENGTH_SHORT).show();
                 }
             }
-            // testig
 
             @Override
             public void onFailure(Call<List<Users>> call, Throwable t) {
                 Log.e("mytag", "Error fetching data: " + t.toString());
-                Toast.makeText(MainActivity.this, "Failed to fetch data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Failed to fetch data: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
